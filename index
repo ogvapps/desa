@@ -412,6 +412,12 @@
         
         function playBeep(frequency, duration, type = 'sine') {
             if (!audioCtx) return;
+            // --- CORRECCIÓN GITHUB ---
+            // Aseguramos que el contexto de audio esté "despierto"
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+            // --- FIN CORRECCIÓN ---
             const oscillator = audioCtx.createOscillator();
             const gainNode = audioCtx.createGain();
             oscillator.connect(gainNode);
@@ -426,6 +432,12 @@
 
         function playChargingSound(duration) {
             if (!audioCtx) return;
+            // --- CORRECCIÓN GITHUB ---
+            // Aseguramos que el contexto de audio esté "despierto"
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+            // --- FIN CORRECCIÓN ---
             const oscillator = audioCtx.createOscillator();
             const gainNode = audioCtx.createGain();
             oscillator.connect(gainNode);
@@ -506,6 +518,23 @@
 
             try {
                 initAudioContext();
+                
+                // --- CORRECCIÓN GITHUB (Web Speech & Audio) ---
+                // 1. "Despertar" el AudioContext explícitamente en el primer clic.
+                if (audioCtx.state === 'suspended') {
+                    await audioCtx.resume();
+                }
+                
+                // 2. "Despertar" la síntesis de voz (truco común)
+                // Forzamos la carga de voces aquí, dentro de un evento de usuario
+                if (speech.getVoices().length === 0) {
+                    updateVoiceList();
+                }
+                // Este 'speak' vacío (o con un espacio) ayuda a inicializar la API
+                // en algunos navegadores (como Chrome)
+                speak(' '); 
+                // --- FIN CORRECCIÓN ---
+
                 playBeep(523, 0.2, 'sine');
             } catch (e) {
                 console.error("No se pudo iniciar el audio:", e);
@@ -698,6 +727,12 @@
          */
         function playMetronomeBeep() {
             if (!audioCtx) return;
+            // --- CORRECCIÓN GITHUB ---
+            // Aseguramos que el contexto de audio esté "despierto"
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+            // --- FIN CORRECCIÓN ---
             const oscillator = audioCtx.createOscillator();
             const gainNode = audioCtx.createGain();
             oscillator.connect(gainNode);
