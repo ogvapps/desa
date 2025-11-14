@@ -1,0 +1,990 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DESA (Desfibrilador Externo SemiAutomático)</title>
+    <!-- Carga de Tailwind CSS --><script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Fuente Inter */
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        /* Estilos para el torso del paciente - ELIMINADOS */
+        /* .torso, .cuello, .hombro, .marcador-parche, .parche-dea, etc... han sido eliminados */
+
+
+        /* Animación de parpadeo para el botón de descarga */
+        @keyframes flash {
+            0%, 100% { 
+                opacity: 1; 
+                transform: scale(1);
+                box-shadow: 0 0 10px #f59e0b, 0 0 20px #f59e0b;
+            }
+            50% { 
+                opacity: 0.8; 
+                transform: scale(1.05);
+                box-shadow: 0 0 20px #f59e0b, 0 0 40px #f59e0b;
+            }
+        }
+        .flashing {
+            animation: flash 1s infinite;
+        }
+
+        /* Animación de pulso para el metrónomo */
+        @keyframes pulse {
+            0%, 100% { 
+                transform: scale(1); 
+                opacity: 0.7;
+            }
+            50% { 
+                transform: scale(1.1); 
+                opacity: 1;
+            }
+        }
+        .pulsing {
+            animation: pulse 0.6s infinite; /* 100 bpm */
+        }
+
+        /* Estilos específicos para el panel del DESA */
+        .desa-panel {
+            background-color: #e0e0e0; /* Color base del dispositivo */
+            border-radius: 12px;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.1), 0 5px 15px rgba(0,0,0,0.2);
+            position: relative;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .desa-screen {
+            background-color: #4CAF50; /* Pantalla verde, como en el iPAD */
+            border: 3px solid #388E3C;
+            border-radius: 8px;
+            padding: 10px;
+            min-height: 80px;
+            width: 90%;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            font-weight: bold;
+            color: white;
+            box-shadow: inset 0 0 8px rgba(0,0,0,0.3);
+            font-size: 1.1rem;
+        }
+        
+        .instruction-image-container {
+            position: relative;
+            width: 200px;
+            height: 250px;
+            background-color: #d8d8d8;
+            border: 1px solid #a0a0a0;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden; /* Asegura que el contenido no se desborde */
+            box-shadow: inset 0 0 5px rgba(0,0,0,0.1);
+        }
+
+        /* --- Estilos para diagramas Pediátrico (Pecho/Espalda) --- */
+        .instruction-image-torso_sm {
+            width: 80px; 
+            height: 120px; 
+            background-color: #f0c9a8;
+            border: 1px solid #b3977c; 
+            border-radius: 15px 15px 0 0; 
+            position: relative;
+        }
+        .instruction-image-head_sm {
+            width: 30px; 
+            height: 30px; 
+            background-color: inherit;
+            border: 1px solid #b3977c; 
+            border-radius: 50%;
+            position: absolute; 
+            top: -25px; 
+            left: 50%; 
+            transform: translateX(-50%);
+        }
+        .instruction-image-patch_sm {
+            position: absolute; 
+            width: 35px; 
+            height: 50px;
+            background-color: #a0a0a0; 
+            border: 1px solid #666; 
+            border-radius: 4px;
+        }
+        
+        /* --- Estilos para diagrama Adulto --- */
+        .instruction-image-torso_lg {
+            width: 120px;
+            height: 180px;
+            background-color: #f0c9a8; /* Tono de piel */
+            border: 1px solid #b3977c;
+            border-radius: 20px 20px 0 0;
+            position: relative;
+        }
+        .instruction-image-head_lg {
+            width: 40px;
+            height: 40px;
+            background-color: #f0c9a8;
+            border: 1px solid #b3977c;
+            border-radius: 50%;
+            position: absolute;
+            top: -35px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        .instruction-image-patch_lg {
+            position: absolute;
+            width: 40px;
+            height: 55px;
+            background-color: #a0a0a0;
+            border: 1px solid #666;
+            border-radius: 4px;
+        }
+        
+        /* --- FIN Estilos de Diagramas --- */
+
+        .desa-button-group {
+            display: flex;
+            justify-content: space-around;
+            width: 100%;
+            margin-top: 20px;
+        }
+
+        .desa-button {
+            border-radius: 9999px; /* Botones redondos */
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            transition: all 0.2s ease-in-out;
+            transform: scale(1);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            position: relative;
+        }
+        .desa-button:hover:not(:disabled) {
+            transform: scale(1.05);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        }
+        .desa-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: scale(1);
+            box-shadow: none;
+        }
+
+        /* --- Estilos para la Ventana Modal (Pop-up) --- */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
+            z-index: 40; /* Por debajo del modal pero encima de todo lo demás */
+        }
+
+        .modal-container {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+            width: 90%;
+            max-width: 500px;
+            padding: 24px;
+            z-index: 50; /* Encima de todo */
+        }
+        /* --- Fin Estilos Modal --- */
+
+        #btn-power {
+            background-color: #4CAF50; /* Verde */
+            color: white;
+            width: 70px;
+            height: 70px;
+            font-size: 0.9rem;
+            border: 2px solid #388E3C;
+        }
+        #btn-power.opacity-50 {
+            background-color: #66BB6A; /* Verde más claro cuando está encendido */
+            border-color: #4CAF50;
+        }
+        #btn-power span {
+            display: block;
+            line-height: 1;
+        }
+
+        #btn-shock {
+            background-color: #FFC107; /* Naranja */
+            color: #333;
+            width: 70px;
+            height: 70px;
+            font-size: 0.9rem;
+            border: 2px solid #FFA000;
+        }
+        #btn-shock.flashing {
+            color: white; /* Texto blanco cuando parpadea */
+            border-color: #FB8C00;
+        }
+
+        /* Indicador de estado (LED) */
+        .status-light {
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            background-color: #999; /* Gris por defecto */
+            border: 1px solid #666;
+            margin-right: 10px;
+        }
+        .status-light.active {
+            background-color: #4CAF50; /* Verde cuando está activo */
+            box-shadow: 0 0 8px #4CAF50, 0 0 12px #4CAF50;
+        }
+    </style>
+</head>
+<body class="bg-gray-200 flex flex-col min-h-screen">
+
+    <!-- Contenido principal que crece para empujar el footer -->
+    <main class="flex-grow flex items-center justify-center p-4">
+        <div class="w-full max-w-6xl mx-auto bg-white shadow-2xl rounded-lg p-6">
+
+            <!-- TÍTULOS MOVIDOS AQUÍ (FUERA DE LAS PANTALLAS) -->
+            <h1 id="simulator-title" class="text-3xl font-bold text-center text-blue-800 mb-2">DESA (Desfibrilador Externo SemiAutomático)</h1>
+            <h2 id="simulator-subtitle" class="text-2xl font-semibold text-center text-gray-700 mb-6"></h2>
+
+
+            <!-- PANTALLA DE SELECCIÓN DE MODO -->
+            <div id="selection-screen" class="text-center">
+                <!-- Título de instrucción eliminado -->
+
+                <!-- CORRECCIÓN DE HTML: 
+                    1. Se ha reparado el botón de Adulto (cerrando la etiqueta </button>)
+                    2. Se ha añadido el botón Pediátrico que faltaba (btn-select-pediatric)
+                -->
+                <div class="flex flex-col md:flex-row justify-center gap-6">
+                    <button id="btn-select-adult" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-6 px-12 rounded-lg shadow-lg transition-all duration-200 transform hover:scale-105">
+                        MODO ADULTO
+                        <span class="block text-sm font-normal">(+ 8 años)</span>
+                    </button>
+                    <button id="btn-select-pediatric" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-6 px-12 rounded-lg shadow-lg transition-all duration-200 transform hover:scale-105">
+                        MODO PEDIÁTRICO
+                        <span class="block text-sm font-normal">(1 - 8 años)</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- SIMULADOR PRINCIPAL (Oculto al inicio) -->
+            <!-- CORRECCIÓN DE HTML: Se ha reparado la estructura rota de 'simulator-main' -->
+            <div id="simulator-main" class="hidden">
+                <!-- Los títulos H1 y H2 fueron movidos fuera (correcto) -->
+                
+                <!-- Contenedor para centrar el panel del DESA -->
+                <div class="flex justify-center">
+
+                    <!-- Columna del DESA (Panel de Control) -->
+                    <div class="w-full md:w-3/4 lg:w-1/2 desa-panel">
+                        <div class="absolute top-4 right-4 flex items-center">
+                            <div id="status-light" class="status-light"></div>
+                            <span class="text-gray-700 font-semibold text-sm">Estado</span>
+                        </div>
+
+                        <div class="desa-screen">
+                            <p id="instruction-text" class="text-white">Dispositivo apagado. Presione el botón de encendido.</p>
+                        </div>
+
+                        <!-- Contenedor de Diagramas -->
+                        <div class="instruction-image-container">
+                            
+                            <!-- Diagrama Adulto (Oculto) -->
+                            <div id="diagrama-adulto" class="hidden text-center">
+                                <div class="relative instruction-image-torso_lg">
+                                    <div class="instruction-image-head_lg"></div>
+                                    <div class="instruction-image-patch_lg" style="top: 30px; left: 15px; transform: rotate(-5deg);"></div>
+                                    <div class="instruction-image-patch_lg" style="bottom: 30px; right: 15px; transform: rotate(5deg);"></div>
+                                </div>
+                            </div>
+
+                            <!-- Diagrama Pediátrico (Oculto) -->
+                            <div id="diagrama-pediatrico" class="hidden flex justify-around items-start p-2 w-full">
+                                <div class="text-center">
+                                    <p class="font-bold text-gray-700 mb-1">PECHO</p>
+                                    <div class="relative instruction-image-torso_sm mt-8">
+                                        <div class="instruction-image-head_sm"></div>
+                                        <div class="instruction-image-patch_sm" style="top: 50%; left: 50%; transform: translate(-50%, -50%);"></div>
+                                    </div>
+                                </div>
+                                <div class="text-center">
+                                    <p class="font-bold text-gray-700 mb-1">ESPALDA</p>
+                                    <div class="relative instruction-image-torso_sm mt-8" style="background-color: #e6bfa0;">
+                                        <div class="instruction-image-head_sm"></div>
+                                        <div class="instruction-image-patch_sm" style="top: 50%; left: 50%; transform: translate(-50%, -50%);"></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+
+                        <!-- Área de RCP (oculta al inicio) -->
+                        <div id="cpr-area" class="text-center mb-6 hidden">
+                            <div id="metronome" class="w-24 h-24 bg-red-500 rounded-full mx-auto mb-3 flex items-center justify-center font-bold text-4xl text-white shadow-lg">
+                                <!-- Conteo -->
+                            </div>
+                            <div class="text-3xl font-mono text-gray-800" id="cpr-timer">2:00</div>
+                            <p id="cpr-phase-text" class="text-xl text-gray-700 font-semibold">Inicie Compresiones</p>
+                        </div>
+
+                        <!-- CORRECCIÓN DE HTML: 
+                            Se ha reparado el contenedor de botones, añadiendo los botones 
+                            que faltaban (btn-apply-pads, btn-shock) y ordenándolos.
+                        -->
+                        <div class="flex flex-col items-center gap-4 w-full">
+                            
+                            <!-- Botones redondos principales (Encendido y Descarga) -->
+                            <div class="flex justify-around w-full mb-4">
+                                <button id="btn-power" class="desa-button">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 24 24" fill="currentColor">
+                                        <path d="M12 2a10 10 0 1010 10A10 10 0 0012 2zm0 18a8 8 0 118-8 8 8 0 01-8 8zM11 7v6a1 1 0 002 0V7a1 1 0 00-2 0z"/>
+                                    </svg>
+                                    <span class="ml-1">ON/<br>OFF</span>
+                                </button>
+                                
+                                <button id="btn-shock" class="desa-button" disabled>
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 24 24" fill="currentColor">
+                                        <path d="M13 2.05v9.9A1 1 0 0112 13a1 1 0 01-1-1.05V2.05a10 10 0 00-6.14 17.57l1.42-1.42A8 8 0 0112 4a8 8 0 016.72 14.19l1.42 1.42A10 10 0 0013 2.05zM12 15a3 3 0 103 3 3 3 0 00-3-3z"/>
+                                    </svg>
+                                    <span class="ml-1">DESCARGA</span>
+                                </button>
+                            </div>
+
+                            <!-- Botón de Aplicar Parches (Secundario) -->
+                            <button id="btn-apply-pads" class="bg-gray-500 hover:bg-gray-600 text-white font-semibold py-3 px-6 rounded-lg shadow-md w-auto" disabled>
+                                Aplicar Parches
+                            </button>
+
+                            <!-- Botones de Utilidad (Reset, Ayuda) -->
+                            <button id="btn-reset" class="bg-gray-500 hover:bg-gray-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md mt-4 w-auto">
+                                CAMBIAR MODO
+                            </button>
+                            
+                            <button id="btn-help" class="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md mt-2 w-auto">
+                                Ayuda
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+        </div>
+    </main>
+
+    <!-- Footer ahora es un hijo directo del body -->
+    <footer class="text-center text-gray-500 text-sm py-6">
+        Simulador de DESA | Creado con fines educativos.
+    </footer>
+
+    <!-- --- Estructura de la Ventana Modal --- -->
+    <div id="modal-overlay" class="modal-overlay hidden"></div>
+    <div id="modal-container" class="modal-container hidden">
+        <h3 id="modal-title" class="text-2xl font-bold text-gray-800 mb-4">Título del Modal</h3>
+        <p id="modal-message" class="text-gray-700 mb-6">Este es el contenido de la ventana emergente.</p>
+        <div class="text-right">
+            <button id="btn-modal-close" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-lg shadow-lg transition-all duration-200">
+                Cerrar
+            </button>
+        </div>
+    </div>
+    <!-- --- Fin Modal --- -->
+
+    <script>
+        // --- Referencias a Elementos ---
+        const instructionText = document.getElementById('instruction-text');
+        const btnPower = document.getElementById('btn-power');
+        const btnApplyPads = document.getElementById('btn-apply-pads');
+        const btnShock = document.getElementById('btn-shock');
+        const btnReset = document.getElementById('btn-reset');
+        const statusLight = document.getElementById('status-light');
+        
+        // --- Nuevos Elementos (Modal y Ayuda) ---
+        const btnHelp = document.getElementById('btn-help');
+        const modalOverlay = document.getElementById('modal-overlay');
+        const modalContainer = document.getElementById('modal-container');
+        const modalTitle = document.getElementById('modal-title');
+        const modalMessage = document.getElementById('modal-message');
+        const btnModalClose = document.getElementById('btn-modal-close');
+        // --- Fin Nuevos Elementos ---
+
+        // Pantallas
+        const selectionScreen = document.getElementById('selection-screen');
+        const simulatorMain = document.getElementById('simulator-main');
+        const simulatorTitle = document.getElementById('simulator-title');
+        const simulatorSubtitle = document.getElementById('simulator-subtitle'); // <-- NUEVO
+
+        // Botones de Selección
+        const btnSelectAdult = document.getElementById('btn-select-adult');
+        const btnSelectPediatric = document.getElementById('btn-select-pediatric');
+
+        // Elementos Paciente (Marcadores) - ELIMINADOS
+        // const marcadorAdulto1 = ...
+        // const marcadorAdulto2 = ...
+        // const marcadorPediatrico1 = ...
+
+        // Elementos Paciente (Parches) - ELIMINADOS
+        // const parcheAdulto1 = ...
+        // const parcheAdulto2 = ...
+        // const parchePediatrico1 = ...
+
+        // Diagramas de Instrucción
+        const diagramaAdulto = document.getElementById('diagrama-adulto');
+        const diagramaPediatrico = document.getElementById('diagrama-pediatrico');
+
+        // Área RCP
+        const cprArea = document.getElementById('cpr-area');
+        const metronome = document.getElementById('metronome');
+        const cprTimerDisplay = document.getElementById('cpr-timer');
+        const cprPhaseText = document.getElementById('cpr-phase-text');
+
+        // --- Variables de Estado Global ---
+        let protocolMode = null; // 'ADULT' o 'PEDIATRIC'
+        let state = 'OFF'; // OFF, POWERED_ON, PADS_APPLIED, ANALYZING, SHOCK_ADVISED, SHOCK_READY, NO_SHOCK_ADVISED, CPR
+        
+        // Timers
+        let cprOverallTimer, cprVisualTimer, cprCycleTimer;
+        let cprPhase = 'COMPRESSIONS';
+        let compressionCount = 1;
+        let ventilationCount = 1;
+        let cprSecondsLeft = 120;
+        
+        // Audio
+        let audioCtx;
+        let spanishVoice = null;
+        const speech = window.speechSynthesis;
+
+        // --- Funciones de Audio (NATIVAS - Web Audio API) ---
+        // (Las funciones initAudioContext, playBeep, playChargingSound, updateVoiceList, speak no cambian)
+        
+        function initAudioContext() {
+            try {
+                if (!audioCtx) {
+                    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+            } catch (e) {
+                console.error("Web Audio API no es soportada en este navegador.", e);
+            }
+        }
+        
+        function playBeep(frequency, duration, type = 'sine') {
+            if (!audioCtx) return;
+            // --- CORRECCIÓN GITHUB ---
+            // Aseguramos que el contexto de audio esté "despierto"
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+            // --- FIN CORRECCIÓN ---
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            oscillator.type = type;
+            oscillator.frequency.setValueAtTime(frequency, audioCtx.currentTime);
+            gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime); 
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration - 0.05);
+            oscillator.start(audioCtx.currentTime);
+            oscillator.stop(audioCtx.currentTime + duration);
+        }
+
+        function playChargingSound(duration) {
+            if (!audioCtx) return;
+            // --- CORRECCIÓN GITHUB ---
+            // AsegurAMOS que el contexto de audio esté "despierto"
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+            // --- FIN CORRECCIÓN ---
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            oscillator.type = 'sawtooth';
+            gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            oscillator.frequency.setValueAtTime(150, audioCtx.currentTime);
+            oscillator.frequency.exponentialRampToValueAtTime(800, audioCtx.currentTime + duration);
+            oscillator.start(audioCtx.currentTime);
+            oscillator.stop(audioCtx.currentTime + duration);
+        }
+
+        function updateVoiceList() {
+            const voices = speech.getVoices();
+            if (voices.length === 0) return;
+            spanishVoice = voices.find(v => v.lang.startsWith('es-ES')) || 
+                           voices.find(v => v.lang.startsWith('es-MX')) || 
+                           voices.find(v => v.lang.startsWith('es-')) ||   
+                           voices.find(v => v.lang.startsWith('es_')) ||   
+                           null;
+        }
+
+        function speak(text) {
+            if (speech.speaking) {
+                speech.cancel();
+            }
+            if (!spanishVoice && speech.getVoices().length > 0) {
+                updateVoiceList();
+            }
+            const utterance = new SpeechSynthesisUtterance(text);
+            if (spanishVoice) {
+                utterance.voice = spanishVoice;
+                utterance.lang = spanishVoice.lang;
+            } else {
+                utterance.lang = 'es-ES';
+                console.warn("No se encontró una voz en español. Usando fallback de idioma.");
+            }
+            utterance.pitch = 1;
+            utterance.rate = 1.1;
+            speech.speak(utterance);
+        }
+
+        // --- Funciones de Estado (Simulación) ---
+
+        /**
+         * Inicia el simulador con el modo seleccionado.
+         * @param {string} mode 'ADULT' o 'PEDIATRIC'
+         */
+        function initSimulator(mode) {
+            protocolMode = mode;
+            
+            // Ocultar selección y mostrar simulador
+            selectionScreen.classList.add('hidden');
+            simulatorMain.classList.remove('hidden');
+
+            // Ajustar título
+            // const baseTitle = 'DESA (Desfibrilador Externo SemiAutomático)'; // Ya no es necesario
+            // EL TÍTULO PRINCIPAL (H1) AHORA ES FIJO.
+            // MODIFICAMOS EL NUEVO SUBTÍTULO (H2)
+            simulatorSubtitle.textContent = (protocolMode === 'ADULT') ? 
+                'Modo: Adulto (+ 8 años)' : 
+                'Modo: Pediátrico (1 - 8 años)';
+            
+            // --- CORRECCIÓN: Lógica movida aquí ---
+            // Mostrar los marcadores y diagrama correctos INMEDIATAMENTE
+            // Lógica de marcadores eliminada
+            if (protocolMode === 'ADULT') {
+                diagramaAdulto.classList.remove('hidden');
+            } else { // PEDIATRIC
+                diagramaPediatrico.classList.remove('hidden');
+            }
+            // --- FIN DE CORRECCIÓN ---
+
+            // Estado inicial de botones del simulador
+            btnApplyPads.disabled = true;
+            btnShock.disabled = true;
+        }
+
+        async function powerOn() {
+            if (state !== 'OFF') return;
+
+            try {
+                initAudioContext();
+                
+                // --- CORRECCIÓN GITHUB (Web Speech & Audio) ---
+                // 1. "Despertar" el AudioContext explícitamente en el primer clic.
+                if (audioCtx.state === 'suspended') {
+                    await audioCtx.resume();
+                }
+                
+                // 2. "Despertar" la síntesis de voz (truco común)
+                // Forzamos la carga de voces aquí, dentro de un evento de usuario
+                if (speech.getVoices().length === 0) {
+                    updateVoiceList();
+                }
+                // Este 'speak' vacío (o con un espacio) ayuda a inicializar la API
+                // en algunos navegadores (como Chrome)
+                speak(' '); 
+                // --- FIN CORRECCIÓN ---
+
+                playBeep(523, 0.2, 'sine');
+            } catch (e) {
+                console.error("No se pudo iniciar el audio:", e);
+            }
+
+            state = 'POWERED_ON';
+            statusLight.classList.add('active');
+            
+            updateInstruction('Dispositivo encendido. Mantenga la calma, siga las instrucciones.', 'info');
+            speak('Dispositivo encendido. Mantenga la calma, siga las instrucciones.');
+
+            btnPower.disabled = true;
+            btnPower.classList.add('opacity-50', 'cursor-not-allowed');
+            
+            btnApplyPads.disabled = false;
+
+            // --- LÓGICA DE MODO (MOVIDA a initSimulator) ---
+            // (Esta sección se ha eliminado de aquí)
+
+            // --- CORRECCIÓN: PROTOCOLO PEDIÁTRICO (5 VENTILACIONES) ---
+            if (protocolMode === 'PEDIATRIC') {
+                // 1. Nueva instrucción: 5 Ventilaciones
+                setTimeout(() => {
+                    const instruction = '¡Inicie con 5 ventilaciones de rescate!';
+                    updateInstruction(instruction, 'warning');
+                    speak(instruction);
+                }, 3500); // 3.5 segundos después de encender
+
+                // 2. Instrucción de parches (retrasada)
+                setTimeout(() => {
+                    const instruction = 'Ahora, quite la ropa y aplique los parches como se indica.';
+                    updateInstruction(instruction, 'info');
+                    speak(instruction);
+                }, 8500); // 5 segundos después de la instrucción de ventilar (3500 + 5000)
+            
+            } else { // PROTOCOLO ADULTO (Directo a parches)
+                setTimeout(() => {
+                    const instruction = 'Quite toda la ropa del pecho del paciente. Aplique los parches como se indica.';
+                    updateInstruction(instruction, 'info');
+                    speak(instruction);
+                }, 3500); 
+            }
+        }
+
+        // --- Nuevas Funciones para el Modal ---
+
+        /**
+         * Muestra la ventana emergente con contenido personalizado.
+         * @param {string} title Título de la ventana
+         * @param {string} message Contenido (puede ser HTML)
+         */
+        function showModal(title, message) {
+            modalTitle.textContent = title;
+            modalMessage.innerHTML = message; // Usamos innerHTML para permitir formato
+            
+            modalOverlay.classList.remove('hidden');
+            modalContainer.classList.remove('hidden');
+        }
+
+        /**
+         * Oculta la ventana emergente.
+         */
+        function hideModal() {
+            modalOverlay.classList.add('hidden');
+            modalContainer.classList.add('hidden');
+        }
+
+        // --- Fin Funciones Modal ---
+
+
+        // --- Funciones de Estado (Simulación) ---
+
+        // --- CORRECCIÓN: Se re-insertó la definición de la función 'applyPads' ---
+        function applyPads() {
+            if (state !== 'POWERED_ON') return;
+            state = 'PADS_APPLIED';
+
+            // --- LÓGICA DE MODO ---
+            // Ocultar marcadores y mostrar parches correctos - SECCIÓN ELIMINADA
+            /*
+            if (protocolMode === 'ADULT') {
+                ...
+            } else { // PEDIATRIC
+                ...
+            }
+            */
+
+            btnApplyPads.disabled = true;
+            btnApplyPads.classList.add('opacity-50', 'cursor-not-allowed');
+
+            const instruction = 'Parches aplicados. No toque al paciente.';
+            updateInstruction(instruction, 'warning');
+            speak(instruction);
+
+            setTimeout(startAnalysis, 3000);
+        }
+
+        function startAnalysis() {
+            if (state !== 'PADS_APPLIED' && state !== 'CPR_DONE') return;
+            state = 'ANALYZING';
+            cprArea.classList.add('hidden');
+            stopCPR();
+            
+            const instruction = 'Analizando el ritmo cardíaco... NO TOQUE AL PACIENTE.';
+            updateInstruction(instruction, 'warning');
+            speak(instruction);
+
+            setTimeout(decideShock, 4500);
+        }
+
+        function decideShock() {
+            if (state !== 'ANALYZING') return;
+            
+            const shockAdvised = Math.random() > 0.3; 
+
+            if (shockAdvised) {
+                state = 'SHOCK_ADVISED';
+                const instruction = 'Se recomienda una descarga. Apártese del paciente.';
+                updateInstruction(instruction, 'danger');
+                speak(instruction);
+                setTimeout(chargeShock, 3000);
+            } else {
+                state = 'NO_SHOCK_ADVISED';
+                const instruction = 'No se recomienda una descarga.';
+                updateInstruction(instruction, 'info');
+                speak(instruction);
+                setTimeout(startCPR, 3000);
+            }
+        }
+
+        function chargeShock() {
+            if (state !== 'SHOCK_ADVISED') return;
+            const instruction = 'Cargando... Manténgase apartado.';
+            updateInstruction(instruction, 'danger');
+            speak(instruction);
+
+            playChargingSound(3);
+            
+            setTimeout(() => {
+                if (state !== 'SHOCK_ADVISED') return;
+                
+                state = 'SHOCK_READY';
+                const instructionReady = '¡APÁRTESE! Presione el botón de descarga parpadeante.';
+                updateInstruction(instructionReady, 'danger');
+                speak(instructionReady);
+                
+                btnShock.disabled = false;
+                btnShock.classList.remove('opacity-50', 'cursor-not-allowed');
+                btnShock.classList.add('flashing', 'hover:bg-orange-600');
+            }, 3500);
+        }
+
+        function deliverShock() {
+            if (state !== 'SHOCK_READY') return;
+            state = 'SHOCK_DELIVERED';
+
+            btnShock.disabled = true;
+            btnShock.classList.remove('flashing', 'hover:bg-orange-600');
+            btnShock.classList.add('opacity-50', 'cursor-not-allowed');
+
+            playBeep(783, 0.5, 'sine'); // G5
+
+            const instruction = 'Descarga administrada. Inicie RCP.';
+            updateInstruction(instruction, 'info');
+            speak(instruction);
+            
+            document.body.classList.add('bg-yellow-300');
+            setTimeout(() => {
+                document.body.classList.remove('bg-yellow-300');
+            }, 200);
+
+            setTimeout(startCPR, 3000);
+        }
+
+        /**
+         * Lógica de RCP (15:2 o 30:2)
+         */
+        function startCPR() {
+            if (state !== 'NO_SHOCK_ADVISED' && state !== 'SHOCK_DELIVERED') return;
+            state = 'CPR';
+            
+            cprArea.classList.remove('hidden');
+            
+            // --- LÓGICA DE MODO ---
+            const compressionText = (protocolMode === 'ADULT') ? '30 Compresiones' : '15 Compresiones';
+            
+            cprSecondsLeft = 120;
+            cprPhase = 'COMPRESSIONS';
+            compressionCount = 1;
+            ventilationCount = 1;
+            cprTimerDisplay.textContent = '2:00';
+            cprPhaseText.textContent = `Inicie ${compressionText}`;
+
+            speak(`Inicie ${compressionText}`);
+
+            cprOverallTimer = setTimeout(stopCPRAndAnalyze, 120000);
+
+            cprVisualTimer = setInterval(() => {
+                // --- CORRECCIÓN ---
+                // Se añade un bloqueo para asegurar que el timer no muestre números
+                // negativos si hay un pequeño retraso en la limpieza de los intervalos.
+                if (cprSecondsLeft <= 0) {
+                    clearInterval(cprVisualTimer); // Detiene este temporizador
+                    return;
+                }
+                // --- FIN CORRECCIÓN ---
+
+                cprSecondsLeft--;
+                let minutes = Math.floor(cprSecondsLeft / 60);
+                let remainingSeconds = cprSecondsLeft % 60;
+                cprTimerDisplay.textContent = `${minutes}:${remainingSeconds < 10 ? '0' : ''}${remainingSeconds}`;
+            }, 1000);
+
+            runCprCycle();
+        }
+
+        /**
+         * Reproduce un solo bip del metrónomo
+         */
+        function playMetronomeBeep() {
+            if (!audioCtx) return;
+            // --- CORRECCIÓN GITHUB ---
+            // Aseguramos que el contexto de audio esté "despierto"
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+            // --- FIN CORRECCIÓN ---
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            oscillator.type = 'square'; 
+            oscillator.frequency.setValueAtTime(200, audioCtx.currentTime);
+            gainNode.gain.setValueAtTime(0.2, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+            oscillator.start(audioCtx.currentTime);
+            oscillator.stop(audioCtx.currentTime + 0.1);
+        }
+
+        /**
+         * Motor del ciclo RCP (se auto-invoca con setTimeout)
+         */
+        function runCprCycle() {
+            if (state !== 'CPR') return;
+
+            // --- LÓGICA DE MODO ---
+            const compressionLimit = (protocolMode === 'ADULT') ? 30 : 15;
+
+            if (cprPhase === 'COMPRESSIONS') {
+                metronome.textContent = compressionCount;
+                metronome.classList.add('pulsing');
+                playMetronomeBeep();
+                setTimeout(() => metronome.classList.remove('pulsing'), 100);
+
+                compressionCount++;
+
+                if (compressionCount > compressionLimit) {
+                    cprPhase = 'VENTILATIONS';
+                    ventilationCount = 1;
+                    cprPhaseText.textContent = 'Dé 2 Ventilaciones';
+                    speak('Dé 2 ventilaciones');
+                    metronome.textContent = 'V-1';
+                    metronome.classList.remove('pulsing');
+                    cprCycleTimer = setTimeout(runCprCycle, 4000); 
+                } else {
+                    cprCycleTimer = setTimeout(runCprCycle, 600);
+                }
+            } else if (cprPhase === 'VENTILATIONS') {
+                if (ventilationCount === 1) {
+                    ventilationCount = 2;
+                    metronome.textContent = 'V-2';
+                    cprCycleTimer = setTimeout(runCprCycle, 4000); 
+                } else {
+                    // --- LÓGICA DE MODO ---
+                    const compressionText = (protocolMode === 'ADULT') ? '30 Compresiones' : '15 Compresiones';
+                    
+                    cprPhase = 'COMPRESSIONS';
+                    compressionCount = 1;
+                    cprPhaseText.textContent = `Inicie ${compressionText}`;
+                    speak(`Inicie ${compressionText}`);
+                    cprCycleTimer = setTimeout(runCprCycle, 600);
+                }
+            }
+        }
+
+        /**
+         * Detiene todos los temporizadores de RCP
+         */
+        function stopCPR() {
+            clearInterval(cprVisualTimer);
+            clearTimeout(cprOverallTimer);
+            clearTimeout(cprCycleTimer);
+            
+            metronome.classList.remove('pulsing');
+            cprArea.classList.add('hidden');
+        }
+
+        /**
+         * Función llamada después de 2 minutos de RCP
+         */
+        function stopCPRAndAnalyze() {
+            if (state !== 'CPR') return;
+            
+            state = 'CPR_DONE';
+            const instructionStop = 'Detenga la RCP.';
+            updateInstruction(instructionStop, 'warning');
+            speak(instructionStop);
+            stopCPR();
+            setTimeout(startAnalysis, 2000);
+        }
+
+        /**
+         * Reinicia el simulador volviendo a la pantalla de selección.
+         */
+        function resetSimulator() {
+            // --- CORRECCIÓN ---
+            // 1. Detener todos los temporizadores de RCP (visual, ciclo, general)
+            stopCPR();
+
+            // 2. Detener cualquier voz que esté hablando
+            speech.cancel();
+            
+            // 3. Cerrar el contexto de audio si se ha inicializado
+            if (audioCtx) {
+                // Usamos .catch() por si ya estaba cerrado, para evitar un error en consola
+                audioCtx.close().catch(console.error); 
+                audioCtx = null; // Liberar la variable
+            }
+            
+            // 4. Recargar la página para un reinicio 100% limpio
+            location.reload();
+        }
+
+        // --- Helper de Instrucciones ---
+        function updateInstruction(text, type) {
+            instructionText.textContent = text;
+            instructionText.classList.remove('text-yellow-300', 'text-green-300', 'text-red-300');
+            instructionText.classList.add('text-white'); 
+        }
+
+        // --- Asignación de Eventos ---
+        // Con el HTML reparado, estas líneas ya no darán error
+        btnSelectAdult.addEventListener('click', () => initSimulator('ADULT'));
+        btnSelectPediatric.addEventListener('click', () => initSimulator('PEDIATRIC'));
+
+        btnPower.addEventListener('click', powerOn);
+        btnApplyPads.addEventListener('click', applyPads);
+        btnShock.addEventListener('click', deliverShock);
+        btnReset.addEventListener('click', resetSimulator);
+
+        // --- Cargar voces al iniciar ---
+        updateVoiceList();
+        if (speech.onvoiceschanged !== undefined) {
+            speech.onvoiceschanged = updateVoiceList;
+        }
+
+        // --- Nuevos Listeners para el Modal ---
+        btnHelp.addEventListener('click', () => {
+            showModal(
+                'Información de Ayuda',
+                'Este es un simulador de DESA con fines educativos.<br><br>' +
+                '<ul>' +
+                '<li class="mb-2"><strong>1. Encendido:</strong> Inicie el dispositivo.</li>' +
+                '<li class="mb-2"><strong>2. Parches:</strong> Siga las instrucciones de voz y los diagramas para aplicar los parches.</li>' +
+                '<li class="mb-2"><strong>3. Análisis:</strong> No toque al paciente mientras el DESA analiza el ritmo.</li>' +
+                '<li class="mb-2"><strong>4. Descarga:</strong> Si se indica, asegúrese de que nadie toque al paciente y presione el botón de descarga.</li>' +
+                '<li class="mb-2"><strong>5. RCP:</strong> Siga el metrónomo para las compresiones y ventilaciones.</li>' +
+                '</ul>'
+            );
+        });
+
+        btnModalClose.addEventListener('click', hideModal);
+        modalOverlay.addEventListener('click', hideModal); // Cerrar al hacer clic fuera
+
+    </script>
+</body>
+</html>
