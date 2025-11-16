@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html lang="es">
-   <head>
+<head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DESA (Desfibrilador Externo SemiAutomático)</title>
+    <title>Simulador de DESA (Adulto y Pediátrico)</title>
     <!-- Carga de Tailwind CSS --><script src="https://cdn.tailwindcss.com"></script>
     <style>
         /* Fuente Inter */
@@ -182,32 +182,6 @@
             box-shadow: none;
         }
 
-        /* --- Estilos para la Ventana Modal (Pop-up) --- */
-        .modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.6);
-            z-index: 40; /* Por debajo del modal pero encima de todo lo demás */
-        }
-
-        .modal-container {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background-color: white;
-            border-radius: 12px;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
-            width: 90%;
-            max-width: 500px;
-            padding: 24px;
-            z-index: 50; /* Encima de todo */
-        }
-        /* --- Fin Estilos Modal --- */
-
         #btn-power {
             background-color: #4CAF50; /* Verde */
             color: white;
@@ -253,158 +227,121 @@
         }
     </style>
 </head>
-<body class="bg-gray-200 flex flex-col min-h-screen">
+<body class="bg-gray-200 min-h-screen flex items-center justify-center p-4">
 
-    <!-- Contenido principal que crece para empujar el footer -->
-    <main class="flex-grow flex items-center justify-center p-4">
-        <div class="w-full max-w-6xl mx-auto bg-white shadow-2xl rounded-lg p-6">
+    <div class="w-full max-w-6xl mx-auto bg-white shadow-2xl rounded-lg p-6">
 
-            <!-- TÍTULOS MOVIDOS AQUÍ (FUERA DE LAS PANTALLAS) -->
-            <h1 id="simulator-title" class="text-3xl font-bold text-center text-blue-800 mb-2">DESA (Desfibrilador Externo SemiAutomático)</h1>
-            <h2 id="simulator-subtitle" class="text-2xl font-semibold text-center text-gray-700 mb-6"></h2>
-
-
-            <!-- PANTALLA DE SELECCIÓN DE MODO -->
-            <div id="selection-screen" class="text-center">
-                <!-- Título de instrucción eliminado -->
-
-                <!-- CORRECCIÓN DE HTML: 
-                    1. Se ha reparado el botón de Adulto (cerrando la etiqueta </button>)
-                    2. Se ha añadido el botón Pediátrico que faltaba (btn-select-pediatric)
-                -->
-                <div class="flex flex-col md:flex-row justify-center gap-6">
-                    <button id="btn-select-adult" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-6 px-12 rounded-lg shadow-lg transition-all duration-200 transform hover:scale-105">
-                        MODO ADULTO
-                        <span class="block text-sm font-normal">(+ 8 años)</span>
-                    </button>
-                    <button id="btn-select-pediatric" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-6 px-12 rounded-lg shadow-lg transition-all duration-200 transform hover:scale-105">
-                        MODO PEDIÁTRICO
-                        <span class="block text-sm font-normal">(1 - 8 años)</span>
-                    </button>
-                </div>
+        <!-- PANTALLA DE SELECCIÓN DE MODO -->
+        <div id="selection-screen" class="text-center">
+            <h1 class="text-3xl font-bold text-blue-800 mb-8">Simulador de DESA</h1>
+            <h2 class="text-2xl font-semibold text-gray-700 mb-6">Seleccione el protocolo del paciente:</h2>
+            <div class="flex flex-col md:flex-row justify-center gap-6">
+                <button id="btn-select-adult" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-6 px-12 rounded-lg shadow-lg transition-all duration-200 transform hover:scale-105">
+                    <span class="text-3xl">ADULTO</span>
+                    <span class="block text-lg">(+ 8 años)</span>
+                </button>
+                <button id="btn-select-pediatric" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-6 px-12 rounded-lg shadow-lg transition-all duration-200 transform hover:scale-105">
+                    <span class="text-3xl">PEDIÁTRICO</span>
+                    <span class="block text-lg">(1 - 8 años)</span>
+                </button>
             </div>
+        </div>
 
-            <!-- SIMULADOR PRINCIPAL (Oculto al inicio) -->
-            <!-- CORRECCIÓN DE HTML: Se ha reparado la estructura rota de 'simulator-main' -->
-            <div id="simulator-main" class="hidden">
-                <!-- Los títulos H1 y H2 fueron movidos fuera (correcto) -->
-                
-                <!-- Contenedor para centrar el panel del DESA -->
-                <div class="flex justify-center">
+        <!-- SIMULADOR PRINCIPAL (Oculto al inicio) -->
+        <div id="simulator-main" class="hidden">
+            <h1 id="simulator-title" class="text-3xl font-bold text-center text-blue-800 mb-6">Simulador de DESA</h1>
+            
+            <!-- CORRECCIÓN: Contenedor modificado para centrar el panel del DESA -->
+            <div class="flex justify-center">
 
-                    <!-- Columna del DESA (Panel de Control) -->
-                    <div class="w-full md:w-3/4 lg:w-1/2 desa-panel">
-                        <div class="absolute top-4 right-4 flex items-center">
-                            <div id="status-light" class="status-light"></div>
-                            <span class="text-gray-700 font-semibold text-sm">Estado</span>
+                <!-- Columna del Paciente -- ELIMINADA -->
+                <!--
+                <div class="w-full md:w-1/2 bg-gray-100 p-6 rounded-lg shadow-inner flex flex-col items-center justify-center min-h-[400px]">
+                    ... (HTML del paciente eliminado) ...
+                </div>
+                -->
+
+                <!-- Columna del DESA (Panel de Control) -->
+                <!-- CORRECCIÓN: Clases de ancho modificadas para centrar -->
+                <div class="w-full md:w-3/4 lg:w-1/2 desa-panel">
+                    <div class="absolute top-4 right-4 flex items-center">
+                        <div id="status-light" class="status-light"></div>
+                        <span class="text-gray-700 font-semibold text-sm">Estado</span>
+                    </div>
+
+                    <div class="desa-screen">
+                        <p id="instruction-text" class="text-white">Dispositivo apagado. Presione el botón de encendido.</p>
+                    </div>
+
+                    <!-- Contenedor de Diagramas -->
+                    <div class="instruction-image-container">
+                        
+                        <!-- Diagrama Adulto (Oculto) -->
+                        <div id="diagrama-adulto" class="hidden text-center">
+                            <div class="relative instruction-image-torso_lg">
+                                <div class="instruction-image-head_lg"></div>
+                                <div class="instruction-image-patch_lg" style="top: 30px; left: 15px; transform: rotate(-5deg);"></div>
+                                <div class="instruction-image-patch_lg" style="bottom: 30px; right: 15px; transform: rotate(5deg);"></div>
+                            </div>
                         </div>
 
-                        <div class="desa-screen">
-                            <p id="instruction-text" class="text-white">Dispositivo apagado. Presione el botón de encendido.</p>
-                        </div>
-
-                        <!-- Contenedor de Diagramas -->
-                        <div class="instruction-image-container">
-                            
-                            <!-- Diagrama Adulto (Oculto) -->
-                            <div id="diagrama-adulto" class="hidden text-center">
-                                <div class="relative instruction-image-torso_lg">
-                                    <div class="instruction-image-head_lg"></div>
-                                    <div class="instruction-image-patch_lg" style="top: 30px; left: 15px; transform: rotate(-5deg);"></div>
-                                    <div class="instruction-image-patch_lg" style="bottom: 30px; right: 15px; transform: rotate(5deg);"></div>
+                        <!-- Diagrama Pediátrico (Oculto) -->
+                        <!-- CORRECCIÓN: Se cambió 'items-center' por 'items-start' para que el texto no se solape --><div id="diagrama-pediatrico" class="hidden flex justify-around items-start p-2 w-full">
+                            <div class="text-center">
+                                <p class="font-bold text-gray-700 mb-1">PECHO</p>
+                                <!-- CORRECCIÓN: Se añade 'mt-8' para bajar el muñeco -->
+                                <div class="relative instruction-image-torso_sm mt-8">
+                                    <div class="instruction-image-head_sm"></div>
+                                    <div class="instruction-image-patch_sm" style="top: 50%; left: 50%; transform: translate(-50%, -50%);"></div>
                                 </div>
                             </div>
-
-                            <!-- Diagrama Pediátrico (Oculto) -->
-                            <div id="diagrama-pediatrico" class="hidden flex justify-around items-start p-2 w-full">
-                                <div class="text-center">
-                                    <p class="font-bold text-gray-700 mb-1">PECHO</p>
-                                    <div class="relative instruction-image-torso_sm mt-8">
-                                        <div class="instruction-image-head_sm"></div>
-                                        <div class="instruction-image-patch_sm" style="top: 50%; left: 50%; transform: translate(-50%, -50%);"></div>
-                                    </div>
-                                </div>
-                                <div class="text-center">
-                                    <p class="font-bold text-gray-700 mb-1">ESPALDA</p>
-                                    <div class="relative instruction-image-torso_sm mt-8" style="background-color: #e6bfa0;">
-                                        <div class="instruction-image-head_sm"></div>
-                                        <div class="instruction-image-patch_sm" style="top: 50%; left: 50%; transform: translate(-50%, -50%);"></div>
-                                    </div>
+                            <div class="text-center">
+                                <p class="font-bold text-gray-700 mb-1">ESPALDA</p>
+                                <!-- CORRECCIÓN: Se añade 'mt-8' para bajar el muñeco -->
+                                <div class="relative instruction-image-torso_sm mt-8" style="background-color: #e6bfa0;">
+                                    <div class="instruction-image-head_sm"></div>
+                                    <div class="instruction-image-patch_sm" style="top: 50%; left: 50%; transform: translate(-50%, -50%);"></div>
                                 </div>
                             </div>
-
                         </div>
 
-                        <!-- Área de RCP (oculta al inicio) -->
-                        <div id="cpr-area" class="text-center mb-6 hidden">
-                            <div id="metronome" class="w-24 h-24 bg-red-500 rounded-full mx-auto mb-3 flex items-center justify-center font-bold text-4xl text-white shadow-lg">
-                                <!-- Conteo -->
-                            </div>
-                            <div class="text-3xl font-mono text-gray-800" id="cpr-timer">2:00</div>
-                            <p id="cpr-phase-text" class="text-xl text-gray-700 font-semibold">Inicie Compresiones</p>
+                    </div>
+
+                    <!-- Área de RCP (oculta al inicio) --><div id="cpr-area" class="text-center mb-6 hidden">
+                        <div id="metronome" class="w-24 h-24 bg-red-500 rounded-full mx-auto mb-3 flex items-center justify-center font-bold text-4xl text-white shadow-lg">
+                            <!-- Conteo -->
                         </div>
+                        <div class="text-3xl font-mono text-gray-800" id="cpr-timer">2:00</div>
+                        <p id="cpr-phase-text" class="text-xl text-gray-700 font-semibold">Inicie Compresiones</p>
+                    </div>
 
-                        <!-- CORRECCIÓN DE HTML: 
-                            Se ha reparado el contenedor de botones, añadiendo los botones 
-                            que faltaban (btn-apply-pads, btn-shock) y ordenándolos.
-                        -->
-                        <div class="flex flex-col items-center gap-4 w-full">
-                            
-                            <!-- Botones redondos principales (Encendido y Descarga) -->
-                            <div class="flex justify-around w-full mb-4">
-                                <button id="btn-power" class="desa-button">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 24 24" fill="currentColor">
-                                        <path d="M12 2a10 10 0 1010 10A10 10 0 0012 2zm0 18a8 8 0 118-8 8 8 0 01-8 8zM11 7v6a1 1 0 002 0V7a1 1 0 00-2 0z"/>
-                                    </svg>
-                                    <span class="ml-1">ON/<br>OFF</span>
-                                </button>
-                                
-                                <button id="btn-shock" class="desa-button" disabled>
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 24 24" fill="currentColor">
-                                        <path d="M13 2.05v9.9A1 1 0 0112 13a1 1 0 01-1-1.05V2.05a10 10 0 00-6.14 17.57l1.42-1.42A8 8 0 0112 4a8 8 0 016.72 14.19l1.42 1.42A10 10 0 0013 2.05zM12 15a3 3 0 103 3 3 3 0 00-3-3z"/>
-                                    </svg>
-                                    <span class="ml-1">DESCARGA</span>
-                                </button>
-                            </div>
+                    <!-- Botones de Control --><div class="flex flex-col items-center gap-4 w-full">
+                        <button id="btn-power" class="desa-button">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M12 2a10 10 0 1010 10A10 10 0 0012 2zm0 18a8 8 0 118-8 8 8 0 01-8 8zM11 7v6a1 1 0 002 0V7a1 1 0 00-2 0z"/>
+                            </svg>
+                            <span class="ml-1">ON/<br>OFF</span>
+                        </button>
 
-                            <!-- Botón de Aplicar Parches (Secundario) -->
-                            <button id="btn-apply-pads" class="bg-gray-500 hover:bg-gray-600 text-white font-semibold py-3 px-6 rounded-lg shadow-md w-auto" disabled>
-                                Aplicar Parches
-                            </button>
+                        <button id="btn-apply-pads" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg shadow-lg transition-all duration-200 transform hover:scale-105 w-auto" disabled>
+                            Aplicar Parches
+                        </button>
+                        
+                        <button id="btn-shock" class="desa-button">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 inline-block" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                            </svg>
+                            DESCARGA
+                        </button>
 
-                            <!-- Botones de Utilidad (Reset, Ayuda) -->
-                            <button id="btn-reset" class="bg-gray-500 hover:bg-gray-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md mt-4 w-auto">
-                                CAMBIAR MODO
-                            </button>
-                            
-                            <button id="btn-help" class="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md mt-2 w-auto">
-                                Ayuda
-                            </button>
-                        </div>
+                        <button id="btn-reset" class="bg-gray-500 hover:bg-gray-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md mt-4 w-auto">
+                            CAMBIAR MODO
+                        </button>
                     </div>
                 </div>
             </div>
-            
-        </div>
-    </main>
-
-    <!-- Footer ahora es un hijo directo del body -->
-    <footer class="text-center text-gray-500 text-sm py-6">
-        Simulador de DESA | Creado con fines educativos.
-    </footer>
-
-    <!-- --- Estructura de la Ventana Modal --- -->
-    <div id="modal-overlay" class="modal-overlay hidden"></div>
-    <div id="modal-container" class="modal-container hidden">
-        <h3 id="modal-title" class="text-2xl font-bold text-gray-800 mb-4">Título del Modal</h3>
-        <p id="modal-message" class="text-gray-700 mb-6">Este es el contenido de la ventana emergente.</p>
-        <div class="text-right">
-            <button id="btn-modal-close" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-lg shadow-lg transition-all duration-200">
-                Cerrar
-            </button>
         </div>
     </div>
-    <!-- --- Fin Modal --- -->
 
     <script>
         // --- Referencias a Elementos ---
@@ -414,21 +351,11 @@
         const btnShock = document.getElementById('btn-shock');
         const btnReset = document.getElementById('btn-reset');
         const statusLight = document.getElementById('status-light');
-        
-        // --- Nuevos Elementos (Modal y Ayuda) ---
-        const btnHelp = document.getElementById('btn-help');
-        const modalOverlay = document.getElementById('modal-overlay');
-        const modalContainer = document.getElementById('modal-container');
-        const modalTitle = document.getElementById('modal-title');
-        const modalMessage = document.getElementById('modal-message');
-        const btnModalClose = document.getElementById('btn-modal-close');
-        // --- Fin Nuevos Elementos ---
 
         // Pantallas
         const selectionScreen = document.getElementById('selection-screen');
         const simulatorMain = document.getElementById('simulator-main');
         const simulatorTitle = document.getElementById('simulator-title');
-        const simulatorSubtitle = document.getElementById('simulator-subtitle'); // <-- NUEVO
 
         // Botones de Selección
         const btnSelectAdult = document.getElementById('btn-select-adult');
@@ -485,12 +412,6 @@
         
         function playBeep(frequency, duration, type = 'sine') {
             if (!audioCtx) return;
-            // --- CORRECCIÓN GITHUB ---
-            // Aseguramos que el contexto de audio esté "despierto"
-            if (audioCtx.state === 'suspended') {
-                audioCtx.resume();
-            }
-            // --- FIN CORRECCIÓN ---
             const oscillator = audioCtx.createOscillator();
             const gainNode = audioCtx.createGain();
             oscillator.connect(gainNode);
@@ -505,12 +426,6 @@
 
         function playChargingSound(duration) {
             if (!audioCtx) return;
-            // --- CORRECCIÓN GITHUB ---
-            // AsegurAMOS que el contexto de audio esté "despierto"
-            if (audioCtx.state === 'suspended') {
-                audioCtx.resume();
-            }
-            // --- FIN CORRECCIÓN ---
             const oscillator = audioCtx.createOscillator();
             const gainNode = audioCtx.createGain();
             oscillator.connect(gainNode);
@@ -567,12 +482,9 @@
             simulatorMain.classList.remove('hidden');
 
             // Ajustar título
-            // const baseTitle = 'DESA (Desfibrilador Externo SemiAutomático)'; // Ya no es necesario
-            // EL TÍTULO PRINCIPAL (H1) AHORA ES FIJO.
-            // MODIFICAMOS EL NUEVO SUBTÍTULO (H2)
-            simulatorSubtitle.textContent = (protocolMode === 'ADULT') ? 
-                'Modo: Adulto (+ 8 años)' : 
-                'Modo: Pediátrico (1 - 8 años)';
+            simulatorTitle.textContent = (protocolMode === 'ADULT') ? 
+                'Simulador de DESA - Adulto' : 
+                'Simulador de DESA - Pediátrico (1-8 años)';
             
             // --- CORRECCIÓN: Lógica movida aquí ---
             // Mostrar los marcadores y diagrama correctos INMEDIATAMENTE
@@ -594,23 +506,6 @@
 
             try {
                 initAudioContext();
-                
-                // --- CORRECCIÓN GITHUB (Web Speech & Audio) ---
-                // 1. "Despertar" el AudioContext explícitamente en el primer clic.
-                if (audioCtx.state === 'suspended') {
-                    await audioCtx.resume();
-                }
-                
-                // 2. "Despertar" la síntesis de voz (truco común)
-                // Forzamos la carga de voces aquí, dentro de un evento de usuario
-                if (speech.getVoices().length === 0) {
-                    updateVoiceList();
-                }
-                // Este 'speak' vacío (o con un espacio) ayuda a inicializar la API
-                // en algunos navegadores (como Chrome)
-                speak(' '); 
-                // --- FIN CORRECCIÓN ---
-
                 playBeep(523, 0.2, 'sine');
             } catch (e) {
                 console.error("No se pudo iniciar el audio:", e);
@@ -655,35 +550,6 @@
             }
         }
 
-        // --- Nuevas Funciones para el Modal ---
-
-        /**
-         * Muestra la ventana emergente con contenido personalizado.
-         * @param {string} title Título de la ventana
-         * @param {string} message Contenido (puede ser HTML)
-         */
-        function showModal(title, message) {
-            modalTitle.textContent = title;
-            modalMessage.innerHTML = message; // Usamos innerHTML para permitir formato
-            
-            modalOverlay.classList.remove('hidden');
-            modalContainer.classList.remove('hidden');
-        }
-
-        /**
-         * Oculta la ventana emergente.
-         */
-        function hideModal() {
-            modalOverlay.classList.add('hidden');
-            modalContainer.classList.add('hidden');
-        }
-
-        // --- Fin Funciones Modal ---
-
-
-        // --- Funciones de Estado (Simulación) ---
-
-        // --- CORRECCIÓN: Se re-insertó la definición de la función 'applyPads' ---
         function applyPads() {
             if (state !== 'POWERED_ON') return;
             state = 'PADS_APPLIED';
@@ -832,12 +698,6 @@
          */
         function playMetronomeBeep() {
             if (!audioCtx) return;
-            // --- CORRECCIÓN GITHUB ---
-            // Aseguramos que el contexto de audio esté "despierto"
-            if (audioCtx.state === 'suspended') {
-                audioCtx.resume();
-            }
-            // --- FIN CORRECCIÓN ---
             const oscillator = audioCtx.createOscillator();
             const gainNode = audioCtx.createGain();
             oscillator.connect(gainNode);
@@ -952,7 +812,6 @@
         }
 
         // --- Asignación de Eventos ---
-        // Con el HTML reparado, estas líneas ya no darán error
         btnSelectAdult.addEventListener('click', () => initSimulator('ADULT'));
         btnSelectPediatric.addEventListener('click', () => initSimulator('PEDIATRIC'));
 
@@ -967,26 +826,6 @@
             speech.onvoiceschanged = updateVoiceList;
         }
 
-        // --- Nuevos Listeners para el Modal ---
-        btnHelp.addEventListener('click', () => {
-            showModal(
-                'Información de Ayuda',
-                'Este es un simulador de DESA con fines educativos.<br><br>' +
-                '<ul>' +
-                '<li class="mb-2"><strong>1. Encendido:</strong> Inicie el dispositivo.</li>' +
-                '<li class="mb-2"><strong>2. Parches:</strong> Siga las instrucciones de voz y los diagramas para aplicar los parches.</li>' +
-                '<li class="mb-2"><strong>3. Análisis:</strong> No toque al paciente mientras el DESA analiza el ritmo.</li>' +
-                '<li class="mb-2"><strong>4. Descarga:</strong> Si se indica, asegúrese de que nadie toque al paciente y presione el botón de descarga.</li>' +
-                '<li class="mb-2"><strong>5. RCP:</strong> Siga el metrónomo para las compresiones y ventilaciones.</li>' +
-                '</ul>'
-            );
-        });
-
-        btnModalClose.addEventListener('click', hideModal);
-        modalOverlay.addEventListener('click', hideModal); // Cerrar al hacer clic fuera
-
     </script>
 </body>
-
 </html>
-
